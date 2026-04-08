@@ -2,104 +2,282 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>聊天</title>
-  <!-- 引入 PeerJS 库 -->
+  <!-- PeerJS 1.5.4 (修复 iOS DTLS 问题) -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
-    /* 样式 */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: #f5f7fb;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       padding: 16px;
+      margin: 0;
     }
     .container {
-      max-width: 500px;
+      max-width: 480px;
       width: 100%;
       background: white;
-      border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border-radius: 28px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
       padding: 24px 20px;
+      transition: all 0.2s;
     }
-    h2 { text-align: center; margin-bottom: 20px; color: #1e293b; }
+    h2 {
+      text-align: center;
+      margin-bottom: 8px;
+      color: #1e293b;
+      font-weight: 600;
+      font-size: 24px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
     .status {
-      background: #eef2ff; color: #4f46e5;
-      padding: 10px 16px; border-radius: 40px;
-      font-size: 14px; margin-bottom: 20px; text-align: center;
-    }
-    .id-panel {
-      background: #f8fafc; border: 1.5px dashed #cbd5e1;
-      border-radius: 20px; padding: 16px;
-      margin-bottom: 20px; text-align: center;
-    }
-    .id-panel p { color: #475569; margin-bottom: 8px; }
-    .id-panel .peer-id {
-      font-family: monospace; font-size: 24px; font-weight: 700;
-      background: white; padding: 8px 16px; border-radius: 40px;
-      border: 1.5px solid #e2e8f0; word-break: break-all;
-    }
-    .chat-box {
-      border: 1.5px solid #e2e8f0; border-radius: 20px;
-      height: 350px; overflow-y: auto; padding: 16px;
-      margin-bottom: 16px; background: #fafafa;
-      display: flex; flex-direction: column; gap: 10px;
-    }
-    .message {
-      max-width: 80%; padding: 10px 16px; border-radius: 20px;
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 12px 16px;
+      border-radius: 40px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 500;
       word-break: break-word;
     }
-    .message.self { align-self: flex-end; background: #4f46e5; color: white; }
-    .message.peer { align-self: flex-start; background: white; border: 1px solid #e2e8f0; color: #1e293b; }
-    .message.system { align-self: center; background: #e2e8f0; color: #475569; font-size: 13px; padding: 6px 14px; }
-    .input-area { display: flex; gap: 10px; }
-    .input-area input {
-      flex: 1; padding: 14px 16px; border: 1.5px solid #e2e8f0;
-      border-radius: 40px; font-size: 16px; outline: none;
+    .my-id-card {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 24px;
+      padding: 20px 16px;
+      margin-bottom: 24px;
+      text-align: center;
     }
-    .input-area input:focus { border-color: #4f46e5; }
+    .my-id-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    .my-id-value {
+      font-family: 'SF Mono', 'Menlo', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #0f172a;
+      background: white;
+      padding: 8px 16px;
+      border-radius: 60px;
+      display: inline-block;
+      border: 1.5px solid #e2e8f0;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .my-id-note {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .connect-panel {
+      margin-bottom: 24px;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 16px 18px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 60px;
+      font-size: 18px;
+      font-family: 'SF Mono', monospace;
+      text-transform: uppercase;
+      outline: none;
+      transition: border 0.2s;
+      background: white;
+    }
+    .input-group input:focus {
+      border-color: #4f46e5;
+    }
+    .input-group input::placeholder {
+      color: #cbd5e1;
+      font-size: 15px;
+      text-transform: none;
+    }
     .btn {
-      background: #4f46e5; color: white; border: none;
-      padding: 14px 22px; border-radius: 40px; font-size: 16px;
-      font-weight: 500; cursor: pointer; transition: 0.2s; white-space: nowrap;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 60px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+      white-space: nowrap;
+      box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
+      border: none;
+      outline: none;
     }
-    .btn:active { background: #4338ca; }
-    .btn.secondary { background: #f1f5f9; color: #1e293b; }
-    .btn.secondary:active { background: #e2e8f0; }
-    .btn:disabled { opacity: 0.5; pointer-events: none; }
-    .hidden { display: none !important; }
+    .btn:active {
+      background: #4338ca;
+      transform: scale(0.98);
+    }
+    .btn.secondary {
+      background: #f1f5f9;
+      color: #1e293b;
+      box-shadow: none;
+    }
+    .btn.secondary:active {
+      background: #e2e8f0;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      box-shadow: none;
+    }
+    .chat-box {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      height: 360px;
+      overflow-y: auto;
+      padding: 18px 14px;
+      margin-bottom: 16px;
+      background: #fafbfc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 10px 16px;
+      border-radius: 24px;
+      word-break: break-word;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    .message.self {
+      align-self: flex-end;
+      background: #4f46e5;
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+    .message.peer {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid #e2e8f0;
+      color: #1e293b;
+      border-bottom-left-radius: 6px;
+    }
+    .message.system {
+      align-self: center;
+      background: #eef2ff;
+      color: #475569;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 40px;
+      max-width: 90%;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 16px 18px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 60px;
+      font-size: 16px;
+      outline: none;
+      background: white;
+    }
+    .input-area input:focus {
+      border-color: #4f46e5;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .flex-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .ios-warning {
+      background: #fef9c3;
+      color: #854d0e;
+      padding: 10px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    /* 仅在 iOS 上显示提示 */
+    @supports (-webkit-touch-callout: none) {
+      .ios-warning {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="container">
-  <h2>🔐 聊天</h2>
+  <h2>🔐 加密通讯</h2>
+  <div class="subtitle">端到端加密</div>
+
+  <!-- 状态栏 -->
   <div id="statusArea" class="status">⏳ 正在初始化...</div>
 
-  <!-- 显示我的 ID -->
-  <div id="idPanel" class="id-panel">
-    <p>你的ID:</p>
-    <div id="myPeerIdDisplay" class="peer-id">---</div>
+  <!-- 我的 ID 卡片 (始终显示) -->
+  <div class="my-id-card">
+    <div class="my-id-label">你的专属 ID</div>
+    <div id="myPeerIdDisplay" class="my-id-value">------</div>
+    <div class="my-id-note">告诉对方此 ID，等待连接请求</div>
   </div>
 
-  <!-- 聊天区域 -->
-  <div id="chatBox" class="chat-box">
-    <div class="message system">✨ 打开页面即自动尝试连接</div>
+  <!-- 连接面板 (输入对方ID并发起请求) -->
+  <div id="connectPanel" class="connect-panel">
+    <div class="input-group">
+      <input type="text" id="remoteIdInput" placeholder="输入对方 ID" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="btn" id="connectBtn">📡 请求连接</button>
+    </div>
+    <button class="btn secondary" id="cancelRequestBtn" style="width:100%; display: none;">取消请求</button>
   </div>
 
-  <div id="inputArea" class="input-area">
-    <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off" disabled>
-    <button class="btn" id="sendBtn" disabled>发送</button>
+  <!-- iOS 兼容提示 (仅在 iOS 设备上显示) -->
+  <div class="ios-warning">
+    ⚠️ 若连接失败，请前往：设置 > Safari > 高级 > Experimental Features > 开启 "WebRTC Platform UDP Sockets"
+  </div>
+
+  <!-- 聊天区域 (初始隐藏) -->
+  <div id="chatPanel" class="hidden">
+    <div id="chatBox" class="chat-box">
+      <div class="message system">✨ 连接已建立，可以开始聊天</div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off" disabled>
+      <button class="btn" id="sendBtn" disabled>发送</button>
+    </div>
+    <button class="btn secondary" id="hangupBtn" style="width:100%; margin-top: 12px;">挂断</button>
   </div>
 </div>
 
 <script>
-  (function() {
-    const OUR_FIXED_PEER_ID = "MY979469"; 
-    
+  (function(){
+    "use strict";
+
+    // ---------- 配置 ----------
+    // 多个 STUN 服务器提高穿透成功率
     const iceServers = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -110,17 +288,28 @@
       ]
     };
 
+    // ---------- DOM 元素 ----------
     const statusArea = document.getElementById('statusArea');
     const myPeerIdDisplay = document.getElementById('myPeerIdDisplay');
+    const connectPanel = document.getElementById('connectPanel');
+    const chatPanel = document.getElementById('chatPanel');
     const chatBox = document.getElementById('chatBox');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
+    const remoteIdInput = document.getElementById('remoteIdInput');
+    const connectBtn = document.getElementById('connectBtn');
+    const cancelRequestBtn = document.getElementById('cancelRequestBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
 
-    let peer;
-    let conn;
-    let connectedToPeer = false;
-    let localPeerId = '';
+    // ---------- 全局变量 ----------
+    let peer = null;                 // PeerJS 实例
+    let currentConnection = null;    // 当前数据连接
+    let myPeerId = '';              // 自己的 ID
+    let isConnected = false;        // 是否已连接
+    let pendingConnection = null;   // 待确认的连接请求
+    let isInitiator = false;        // 是否是主动发起方
 
+    // ---------- 辅助函数：添加消息 ----------
     function addMessage(text, type = 'system') {
       const msgDiv = document.createElement('div');
       msgDiv.classList.add('message', type);
@@ -133,141 +322,309 @@
       statusArea.textContent = text;
     }
 
-    function enableChatUI(enabled) {
+    // 启用/禁用聊天 UI
+    function setChatEnabled(enabled) {
       messageInput.disabled = !enabled;
       sendBtn.disabled = !enabled;
     }
 
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      if (!conn || !connectedToPeer) {
-        addMessage('⚠️ 未连接到对方', 'system');
-        return;
+    // 切换界面：显示聊天界面，隐藏连接面板
+    function showChatUI(show) {
+      if (show) {
+        connectPanel.classList.add('hidden');
+        chatPanel.classList.remove('hidden');
+      } else {
+        connectPanel.classList.remove('hidden');
+        chatPanel.classList.add('hidden');
       }
-      conn.send(text);
-      addMessage(text, 'self');
-      messageInput.value = '';
     }
 
-    function handleData(data) {
-      addMessage(data, 'peer');
+    // 重置到未连接状态
+    function resetToDisconnected() {
+      isConnected = false;
+      setChatEnabled(false);
+      showChatUI(false);
+      cancelRequestBtn.style.display = 'none';
+      connectBtn.disabled = false;
+      remoteIdInput.disabled = false;
+      
+      if (currentConnection) {
+        currentConnection.close();
+        currentConnection = null;
+      }
+      pendingConnection = null;
+      isInitiator = false;
+      
+      // 清空聊天记录 (可选)
+      // chatBox.innerHTML = '<div class="message system">✨ 连接已断开，可重新发起连接</div>';
     }
 
-    function connectToPeer() {
-      if (!peer) {
-        console.error('Peer 尚未初始化');
+    // 关闭连接并清理
+    function hangup() {
+      if (currentConnection) {
+        currentConnection.close();
+      }
+      resetToDisconnected();
+      updateStatus('📭 连接已断开');
+      addMessage('🔌 你已挂断', 'system');
+    }
+
+    // ---------- 处理收到的连接请求 (被叫方) ----------
+    function handleIncomingConnection(conn) {
+      // 如果已经有连接，拒绝新的
+      if (currentConnection) {
+        conn.close();
+        addMessage('⚠️ 已有连接，拒绝了新的请求', 'system');
         return;
       }
 
-      if (conn) {
-        try { conn.close(); } catch(e) {}
-        conn = null;
+      // 弹出确认框 (浏览器原生)
+      const peerId = conn.peer;
+      const userConfirmed = confirm(`🔔 "${peerId}" 请求与你建立加密连接，是否同意？`);
+      
+      if (userConfirmed) {
+        // 接受连接
+        pendingConnection = null;
+        setupConnection(conn);
+        updateStatus('🟢 已连接');
+        addMessage(`✅ 已接受 ${peerId} 的连接`, 'system');
+        showChatUI(true);
+        setChatEnabled(true);
+        isConnected = true;
+      } else {
+        // 拒绝连接
+        conn.close();
+        addMessage(`❌ 拒绝了 ${peerId} 的连接请求`, 'system');
+        updateStatus('⏸️ 已拒绝请求');
       }
+    }
 
-      updateStatus('🔗 正在尝试连接对方...');
-      conn = peer.connect(OUR_FIXED_PEER_ID, {
-        reliable: true,
-        serialization: 'json'
-      });
-
+    // ---------- 配置 DataConnection ----------
+    function setupConnection(conn) {
+      currentConnection = conn;
+      
       conn.on('open', () => {
-        updateStatus('🟢 连接已建立！可以开始聊天了');
-        connectedToPeer = true;
-        enableChatUI(true);
-        addMessage('🎉 已连接到对方', 'system');
-        
+        isConnected = true;
+        setChatEnabled(true);
+        updateStatus('🟢 加密通道已建立');
+        addMessage('🔐 连接成功，可以开始私密聊天', 'system');
+        cancelRequestBtn.style.display = 'none';
+        connectBtn.disabled = false;
+        remoteIdInput.disabled = false;
       });
 
-      conn.on('data', handleData);
+      conn.on('data', (data) => {
+        addMessage(data, 'peer');
+      });
 
       conn.on('close', () => {
-        updateStatus('🔌 连接已断开');
-        connectedToPeer = false;
-        enableChatUI(false);
-        addMessage('📭 对方已断开连接', 'system');
-        conn = null;
+        if (currentConnection === conn) {
+          updateStatus('🔌 对方已断开');
+          addMessage('📭 对方结束了聊天', 'system');
+          resetToDisconnected();
+        }
       });
 
       conn.on('error', (err) => {
         console.error('连接错误:', err);
-        updateStatus('❌ 连接失败，对方可能不在线');
-        addMessage('❌ 无法连接到对方，请确保对方已打开页面', 'system');
-        connectedToPeer = false;
-        enableChatUI(false);
-        conn = null;
+        addMessage(`⚠️ 连接错误: ${err.type || 'unknown'}`, 'system');
+        updateStatus('❌ 连接异常');
+        resetToDisconnected();
       });
     }
 
-    function initializePeer() {
-      updateStatus('⏳ 正在连接信令服务器...');
+    // ---------- 发起连接 (主叫方) ----------
+    function initiateConnection(remoteId) {
+      if (!peer) {
+        alert('信令服务器尚未连接，请稍后');
+        return;
+      }
 
-      peer = new Peer(OUR_FIXED_PEER_ID, {
+      if (remoteId === myPeerId) {
+        alert('不能连接自己');
+        return;
+      }
+
+      // 防止重复连接
+      if (currentConnection || isInitiator) {
+        alert('已有进行中的连接，请先挂断');
+        return;
+      }
+
+      isInitiator = true;
+      connectBtn.disabled = true;
+      remoteIdInput.disabled = true;
+      cancelRequestBtn.style.display = 'block';
+      updateStatus(`⏳ 正在向 ${remoteId} 发送连接请求...`);
+
+      const conn = peer.connect(remoteId, {
+        reliable: true,
+        serialization: 'json'
+      });
+
+      // 设置超时 (15秒)
+      const timeoutId = setTimeout(() => {
+        if (!isConnected && conn && conn.open === false) {
+          conn.close();
+          updateStatus('⏰ 连接请求超时，对方可能不在线');
+          addMessage('⌛ 连接超时，请确认对方 ID 正确且在线', 'system');
+          resetToDisconnected();
+          cancelRequestBtn.style.display = 'none';
+        }
+      }, 15000);
+
+      conn.on('open', () => {
+        clearTimeout(timeoutId);
+        setupConnection(conn);
+        showChatUI(true);
+        setChatEnabled(true);
+        isConnected = true;
+        updateStatus('🟢 对方已同意，连接成功');
+        addMessage(`🤝 与 ${remoteId} 的连接已建立`, 'system');
+        cancelRequestBtn.style.display = 'none';
+      });
+
+      conn.on('error', (err) => {
+        clearTimeout(timeoutId);
+        console.error('发起连接失败:', err);
+        updateStatus(`❌ 无法连接到 ${remoteId}`);
+        addMessage(`❌ 连接失败: ${err.type || '对方无响应'}`, 'system');
+        resetToDisconnected();
+        cancelRequestBtn.style.display = 'none';
+      });
+
+      // 暂存以便取消
+      pendingConnection = conn;
+    }
+
+    // 取消请求
+    function cancelRequest() {
+      if (pendingConnection) {
+        pendingConnection.close();
+        pendingConnection = null;
+      }
+      resetToDisconnected();
+      updateStatus('⏸️ 已取消请求');
+    }
+
+    // ---------- 初始化 PeerJS ----------
+    function initializePeer() {
+      updateStatus('⏳ 正在连接信令网络...');
+
+      // 生成一个易读的6位ID (大写字母+数字，排除易混淆字符)
+      const customId = generateReadableId(6);
+      
+      peer = new Peer(customId, {
         config: iceServers,
-        debug: 1 
+        debug: 0  // 0=关闭, 1=简要, 2=详细, 3=全部
       });
 
       peer.on('open', (id) => {
-        localPeerId = id;
+        myPeerId = id;
         myPeerIdDisplay.textContent = id;
-        updateStatus('✅ 已上线，等待对方连接...');
-        addMessage(`🔑 你的 ID: ${id}`, 'system');
-        
-        connectToPeer();
+        updateStatus('✅ 在线，等待连接请求');
+        addMessage(`🆔 你的 ID: ${id}`, 'system');
       });
 
-      peer.on('connection', (connection) => {
-        if (conn) {
-          conn.close();
-        }
-        conn = connection;
-        
-        conn.on('open', () => {
-          updateStatus('🟢 连接已建立！可以开始聊天了');
-          connectedToPeer = true;
-          enableChatUI(true);
-          addMessage('🎉 对方已连接', 'system');
-        });
-
-        conn.on('data', handleData);
-
-        conn.on('close', () => {
-          updateStatus('🔌 连接已断开');
-          connectedToPeer = false;
-          enableChatUI(false);
-          addMessage('📭 对方已断开连接', 'system');
-          conn = null;
-        });
-
-        conn.on('error', (err) => {
-          console.error('连接错误:', err);
-        });
+      // 被叫：收到连接请求
+      peer.on('connection', (conn) => {
+        handleIncomingConnection(conn);
       });
 
       peer.on('error', (err) => {
         console.error('PeerJS 错误:', err);
-        updateStatus(`❌ 错误: ${err.type}`);
-        addMessage(`❌ 发生错误: ${err.type}`, 'system');
+        let errorMsg = '信令服务器错误';
+        if (err.type === 'peer-unavailable') {
+          errorMsg = '对方不在线';
+        } else if (err.type === 'disconnected') {
+          errorMsg = '与信令服务器断开';
+        } else if (err.type === 'server-error') {
+          errorMsg = '服务器错误';
+        }
+        updateStatus(`⚠️ ${errorMsg}`);
+        addMessage(`⚠️ ${errorMsg}`, 'system');
+        
+        // 如果是断开连接，尝试重连 (PeerJS 会自动重连)
+        if (err.type === 'disconnected') {
+          peer.reconnect();
+        }
       });
 
       peer.on('disconnected', () => {
-        updateStatus('🔌 与信令服务器断开，尝试重连...');
+        updateStatus('🔌 信令连接中断，尝试重连...');
       });
 
       peer.on('close', () => {
         updateStatus('⏹️ 连接已关闭');
-        addMessage('⏹️ 连接已关闭', 'system');
       });
     }
 
-    sendBtn.addEventListener('click', sendMessage);
+    // 生成易读的随机ID (例如 "AB3F9K")
+    function generateReadableId(length) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 排除 0, O, I, 1 等易混淆字符
+      let id = '';
+      for (let i = 0; i < length; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return id;
+    }
+
+    // ---------- 事件绑定 ----------
+    connectBtn.addEventListener('click', () => {
+      const remoteId = remoteIdInput.value.trim().toUpperCase();
+      if (!remoteId) {
+        alert('请输入对方的 ID');
+        return;
+      }
+      if (remoteId.length < 4) {
+        alert('ID 长度至少 4 位');
+        return;
+      }
+      initiateConnection(remoteId);
+    });
+
+    cancelRequestBtn.addEventListener('click', cancelRequest);
+
+    hangupBtn.addEventListener('click', () => {
+      hangup();
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      if (!currentConnection || !isConnected) {
+        addMessage('⚠️ 未连接，无法发送', 'system');
+        return;
+      }
+      currentConnection.send(text);
+      addMessage(text, 'self');
+      messageInput.value = '';
+    });
+
     messageInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        sendMessage();
+        sendBtn.click();
       }
     });
 
+    // 输入框自动转大写
+    remoteIdInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+
+    // 启动一切
     initializePeer();
+
+    // 页面关闭前清理
+    window.addEventListener('beforeunload', () => {
+      if (currentConnection) {
+        currentConnection.close();
+      }
+      if (peer) {
+        peer.destroy();
+      }
+    });
+
   })();
 </script>
 </body>
