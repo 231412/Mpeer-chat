@@ -377,7 +377,7 @@
 
       // 弹出确认框
       const peerId = conn.peer;
-      const userConfirmed = confirm(`🔔 "${peerId}" 请求与你建立加密连接，是否同意？`);
+      const userConfirmed = confirm(`🔔 "${peerId}" 请求与你建立连接，是否同意？`);
       
       if (userConfirmed) {
         // 接受连接
@@ -403,8 +403,8 @@
       conn.on('open', () => {
         isConnected = true;
         setChatEnabled(true);
-        updateStatus('🟢 加密通道已建立');
-        addMessage('🔐 连接成功，可以开始私密聊天', 'system');
+        updateStatus('🟢 通讯已建立');
+        addMessage('🔐 连接成功，可以开始聊天', 'system');
         cancelRequestBtn.style.display = 'none';
         connectBtn.disabled = false;
         remoteIdInput.disabled = false;
