@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>聊天</title>
-  <!-- PeerJS 1.5.4 (修复 iOS DTLS 问题) -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     * {
@@ -232,15 +231,15 @@
 </head>
 <body>
 <div class="container">
-  <h2>🔐 加密通讯</h2>
-  <div class="subtitle">端到端加密</div>
+  <h2>🔐加密通讯</h2>
+  <div class="subtitle">基本加密</div>
 
   <!-- 状态栏 -->
   <div id="statusArea" class="status">⏳ 正在初始化...</div>
 
   <!-- 我的 ID 卡片 (始终显示) -->
   <div class="my-id-card">
-    <div class="my-id-label">你的专属 ID</div>
+    <div class="my-id-label">你的ID</div>
     <div id="myPeerIdDisplay" class="my-id-value">------</div>
     <div class="my-id-note">告诉对方此 ID，等待连接请求</div>
   </div>
@@ -354,9 +353,7 @@
       }
       pendingConnection = null;
       isInitiator = false;
-      
-      // 清空聊天记录 (可选)
-      // chatBox.innerHTML = '<div class="message system">✨ 连接已断开，可重新发起连接</div>';
+
     }
 
     // 关闭连接并清理
@@ -378,7 +375,7 @@
         return;
       }
 
-      // 弹出确认框 (浏览器原生)
+      // 弹出确认框
       const peerId = conn.peer;
       const userConfirmed = confirm(`🔔 "${peerId}" 请求与你建立加密连接，是否同意？`);
       
@@ -511,12 +508,12 @@
     function initializePeer() {
       updateStatus('⏳ 正在连接信令网络...');
 
-      // 生成一个易读的6位ID (大写字母+数字，排除易混淆字符)
+      // 生成6位ID
       const customId = generateReadableId(6);
       
       peer = new Peer(customId, {
         config: iceServers,
-        debug: 0  // 0=关闭, 1=简要, 2=详细, 3=全部
+        debug: 1  
       });
 
       peer.on('open', (id) => {
@@ -544,7 +541,7 @@
         updateStatus(`⚠️ ${errorMsg}`);
         addMessage(`⚠️ ${errorMsg}`, 'system');
         
-        // 如果是断开连接，尝试重连 (PeerJS 会自动重连)
+        // 如果是断开连接，尝试重连
         if (err.type === 'disconnected') {
           peer.reconnect();
         }
@@ -559,9 +556,9 @@
       });
     }
 
-    // 生成易读的随机ID (例如 "AB3F9K")
+    // 随机ID
     function generateReadableId(length) {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 排除 0, O, I, 1 等易混淆字符
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
       let id = '';
       for (let i = 0; i < length; i++) {
         id += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -612,7 +609,7 @@
       e.target.value = e.target.value.toUpperCase();
     });
 
-    // 启动一切
+    // 启动所以
     initializePeer();
 
     // 页面关闭前清理
